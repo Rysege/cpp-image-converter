@@ -13,12 +13,12 @@ static const uint32_t BMP_BIT = 24;     // количество бит на пи
 static const uint32_t BMP_COMPR = 0;    // 0 — отсутствие сжатия
 
 // функция вычисления отступа по ширине
-// деление, а затем умножение на 4 округляет до числа, кратного четырём
-// увеличение ширины на единицу гарантирует, что округление будет вверх
 static int GetBMPStride(int width) {
-    static const int multiple = 4;
+    // отступ не всегда равен утроенной ширине: к каждой строке может добавляться padding,
+    // чтобы количество байт стало кратно четырём
+    static const int padding = width % 4; 
     static const int bytes_per_pixel = 3;
-    return multiple * ((++width * bytes_per_pixel) / multiple);
+    return width * bytes_per_pixel + padding;
 }
 
 PACKED_STRUCT_BEGIN BitmapFileHeader{
