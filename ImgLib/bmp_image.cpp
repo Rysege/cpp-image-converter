@@ -13,8 +13,12 @@ static const uint32_t BMP_BIT = 24;     // количество бит на пи
 static const uint32_t BMP_COMPR = 0;    // 0 — отсутствие сжатия
 
 // функция вычисления отступа по ширине
-static int GetBMPStride(int w) {
-    return 4 * ((w * 3 + 3) / 4);
+// деление, а затем умножение на 4 округляет до числа, кратного четырём
+// увеличение ширины на единицу гарантирует, что округление будет вверх
+static int GetBMPStride(int width) {
+    static const int multiple = 4;
+    static const int bytes_per_pixel = 3;
+    return multiple * ((++width * bytes_per_pixel) / multiple);
 }
 
 PACKED_STRUCT_BEGIN BitmapFileHeader{
@@ -47,7 +51,7 @@ PACKED_STRUCT_BEGIN BitmapInfoHeader{
     BitmapInfoHeader(int width, int height)
         : bi_width(width)
         , bi_height(height)
-        , bi_size_image(GetBMPStride(width)* height) {
+        , bi_size_image(GetBMPStride(width) * height) {
     }
 }
 PACKED_STRUCT_END
@@ -89,12 +93,12 @@ Image LoadBMP(const Path& file) {
     BitmapInfoHeader info_header;
 
     ifs.read(reinterpret_cast<char*>(&file_header), sizeof(file_header));
-    if (file_header.bf_type != BMP_SIG) {
+    if (ifs.bad() || file_header.bf_type != BMP_SIG) {
         return {};
     }
 
     ifs.read(reinterpret_cast<char*>(&info_header), sizeof(info_header));
-    if (info_header.bi_bit_count != BMP_BIT || info_header.bi_compression != BMP_COMPR) {
+    if (ifs.bad() || info_header.bi_bit_count != BMP_BIT || info_header.bi_compression != BMP_COMPR) {
         return {};
     }
 
